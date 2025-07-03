@@ -12,7 +12,7 @@ fi
 current_space=$(yabai -m query --spaces --space | jq '.index')
 
 if [[ "$MODE" == "on" ]]; then
-  osascript -e 'tell application "Firefox" to quit'
+  osascript -e 'tell application "LibreWolf" to quit'
 
   open -na "Chromium"
   sleep 1
@@ -32,9 +32,9 @@ else
   osascript -e 'tell application "Slack" to quit'
   osascript -e 'tell application "Twingate" to quit'
 
-  open -na "Firefox"
+  open -na "LibreWolf"
   sleep 1
-  firefox_window_id=$(yabai -m query --windows | jq '.[] | select(.app == "Firefox") | .id' | tail -n1)
+  firefox_window_id=$(yabai -m query --windows | jq '.[] | select(.app == "LibreWolf") | .id' | tail -n1)
   yabai -m window "$firefox_window_id" --space 2
   yabai -m space --focus 2
 fi
