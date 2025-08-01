@@ -43,7 +43,7 @@ sleep 0.5
 yabai -m space --focus "$current_space"
 
 if [[ "$MODE" == "on" ]]; then
-  ~/.scripts/tmux-sessionizer.sh ~/Developer/work/signus/signus-ui
+  ~/scripts/tmux-sessionizer.sh ~/projects/work/signus/signus-ui
 else
-  ~/.scripts/tmux-sessionizer.sh ~
+  ~/scripts/tmux-sessionizer.sh ~
 fi
