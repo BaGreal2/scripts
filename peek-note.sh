@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-NOTE_DIR="$HOME/Documents/Notes"
-
 tmux new-window -n "peek-note" "bash -c '
-  FILE=\$(find \"$NOTE_DIR\" -type f -name \"*.md\" | fzf);
-  if [ -n \"\$FILE\" ]; then
-    nvim \"\$FILE\"
+  NOTE_DIR=\"$HOME/notes\"
+  REL_PATH=\$(find \"\$NOTE_DIR\" -type f -name \"*.md\" | sed \"s|^\$NOTE_DIR/||\" | fzf --no-multi --preview=\"bat --style=numbers --color=always \$NOTE_DIR/{}\" --preview-window=right:60%);
+  if [ -n \"\$REL_PATH\" ]; then
+    nvim \"\$NOTE_DIR/\$REL_PATH\"
   fi
 '"
