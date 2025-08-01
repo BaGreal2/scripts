@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MOVIE_DIR="$HOME/Documents/Movies"
+MOVIE_DIR="$HOME/videos/movies"
 
 tmux new-window -n "watch-movie" "bash -c '
   DIR_NAME=\$(find \"$MOVIE_DIR\" -mindepth 1 -maxdepth 1 -type d | sed \"s|^$MOVIE_DIR/||\" | sort | fzf --no-multi --no-sort);
