@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Save into ~/.local/bin/update-librewolf, ask your local llm to put it on your favorite schedule
+
+# Auto-update LibreWolf on macOS (Apple Silicon or Intel)
+# - Detect latest version and assets from Codeberg releases API
+# - Skip if already installed
+# - Download DMG, verify SHA256, install to /Applications
+
+ARCH_RAW=$(uname -m)
+if [[ "$ARCH_RAW" == "arm64" ]]; then ARCH="arm64"; else ARCH="x86_64"; fi
+
+API_URL="https://codeberg.org/api/v1/repos/librewolf/bsys6/releases/latest"
+
+echo "Detecting latest LibreWolf release..."
+release_info=$(curl -fsSL "$API_URL")
+read -r LATEST_VER DMG DMG_URL SHA_URL < <(
+  printf '%s' "$release_info" | python3 -c '
+import json
+import sys
+
+arch = sys.argv[1]
+release = json.load(sys.stdin)
+version = release.get("tag_name", "")
+dmg_name = f"librewolf-{version}-macos-{arch}-package.dmg"
+sha_name = f"{dmg_name}.sha256sum"
+assets = {asset.get("name"): asset.get("browser_download_url", "") for asset in release.get("assets", [])}
+
+if not version or not assets.get(dmg_name) or not assets.get(sha_name):
+    raise SystemExit(1)
+
+print(version, dmg_name, assets[dmg_name], assets[sha_name])
+' "$ARCH"
+)
+
+if [[ -z "${LATEST_VER:-}" || -z "${DMG_URL:-}" || -z "${SHA_URL:-}" ]]; then
+  echo "ERROR: Failed to detect latest LibreWolf macOS ${ARCH} release asset from Codeberg" >&2
+  exit 1
+fi
+
+echo "Latest available release: ${LATEST_VER}"
+
+# Check currently installed version
+DEST="/Applications/LibreWolf.app"
+if [[ -d "$DEST" ]]; then
+  CURRENT_VER=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$DEST/Contents/Info.plist" 2>/dev/null || echo "unknown")
+  echo "Currently installed: ${CURRENT_VER}"
+  if [[ "$CURRENT_VER" == "$LATEST_VER" ]]; then
+    echo "Already up to date. Nothing to do."
+    exit 0
+  fi
+fi
+
+TMPDIR=$(mktemp -d)
+trap '[[ -n "${MNT:-}" ]] && hdiutil detach "$MNT" >/dev/null 2>&1 || true; rm -rf "$TMPDIR"' EXIT
+
+echo "Downloading: ${DMG_URL}"
+DMG_LOCAL="$TMPDIR/$DMG"
+curl -fL --retry 3 --retry-delay 2 -o "$DMG_LOCAL" "$DMG_URL"
+
+echo "Fetching checksum: ${SHA_URL}"
+expected=$(curl -fsSL "$SHA_URL" | awk '{print $1; exit}')
+if [[ -z "${expected:-}" ]]; then
+  echo "ERROR: Could not retrieve checksum from ${SHA_URL}" >&2
+  exit 1
+fi
+echo "$expected  $DMG_LOCAL" | shasum -a 256 -c -
+
+echo "Mounting DMG..."
+MNT="$TMPDIR/mnt"
+mkdir -p "$MNT"
+hdiutil attach -nobrowse -mountpoint "$MNT" "$DMG_LOCAL" >/dev/null
+
+APP_SRC=$(find "$MNT" -maxdepth 2 -name "LibreWolf.app" -print -quit)
+if [[ -z "${APP_SRC:-}" ]]; then
+  echo "ERROR: LibreWolf.app not found inside DMG" >&2
+  exit 1
+fi
+
+echo "Installing to ${DEST}..."
+if [[ -d "$DEST" ]]; then
+  echo "Removing existing installation at ${DEST} (app may be running)."
+  rm -rf "$DEST"
+fi
+ditto "$APP_SRC" "$DEST"
+
+echo "Clearing Gatekeeper quarantine..."
+xattr -dr com.apple.quarantine "$DEST" || true
+
+VER_INSTALLED=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$DEST/Contents/Info.plist" 2>/dev/null || echo "$LATEST_VER")
+echo "Installed LibreWolf ${VER_INSTALLED} (${ARCH})"
+
+echo "Detaching DMG..."
+hdiutil detach "$MNT" >/dev/null
+
+exit 0

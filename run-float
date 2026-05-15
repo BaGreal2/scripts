@@ -1,0 +1,3 @@
+#!/bin/sh
+
+open -na "Alacritty" --args -t FloatPad --config-file "$HOME/.config/alacritty/floatpad.toml" -e zsh -lic $1

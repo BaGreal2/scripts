@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DIR="$HOME/notes/signus/"
+DIR="$HOME/notes"
 
 mkdir -p "$DIR"
 
@@ -15,11 +15,13 @@ if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
   BRANCH="$(git -C "$PANE_PATH" rev-parse --short HEAD 2>/dev/null)"
 fi
 
+SAFE_REPO="$(basename "$PANE_PATH" | tr '/ ' '--')"
 SAFE="$(printf "%s" "$BRANCH" | tr '/ ' '--')"
-FILE="$DIR/$SAFE.md"
+mkdir -p "$DIR/$SAFE_REPO"
+FILE="$DIR/$SAFE_REPO/$SAFE.md"
 
 if [ ! -e "$FILE" ]; then
-  : > "$FILE"
+  echo "# $BRANCH" > "$FILE"
 fi
 
 tmux new-window -n "note:$SAFE" "nvim \"$FILE\"; tmux kill-window"

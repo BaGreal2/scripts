@@ -2,48 +2,47 @@
 
 set -e
 
-MODE="$1"
+MODE="${1:-}"
 
 if [[ "$MODE" != "on" && "$MODE" != "off" ]]; then
   echo "Usage: $0 [on|off]"
   exit 1
 fi
 
-current_space=$(yabai -m query --spaces --space | jq '.index')
+quit_app() {
+  local app="$1"
+  # echo "Quitting $app..."
+  osascript -e "tell application \"$app\" to quit" 2>/dev/null || true
+  sleep 0.5
+  pkill -ix "$app" 2>/dev/null || true
+}
+
+move_app_to_ws() {
+  local app="$1" ws="$2" id=""
+  for _ in {1..40}; do
+    id="$(aerospace list-windows --all --format '%{window-id} %{app-name}%{newline}' \
+      | awk -v a="$app" '$2==a{print $1}' | tail -n1)"
+    [[ -n "$id" ]] && break
+    sleep 0.25
+  done
+  [[ -n "$id" ]] && aerospace move-node-to-workspace --window-id "$id" "$ws"
+}
 
 if [[ "$MODE" == "on" ]]; then
-  osascript -e 'tell application "LibreWolf" to quit'
-
+  quit_app "LibreWolf"
   open -na "Chromium"
-  sleep 1
-  chromium_window_id=$(yabai -m query --windows | jq '.[] | select(.app == "Chromium") | .id' | tail -n1)
-  yabai -m window "$chromium_window_id" --space 2
-  yabai -m space --focus 2
-
+  move_app_to_ws "Chromium" "2"
   open -na "Slack"
-  sleep 1
-  slack_window_id=$(yabai -m query --windows | jq '.[] | select(.app == "Slack") | .id' | tail -n1)
-  yabai -m window "$slack_window_id" --space 4
-  yabai -m space --focus 4
-
+  move_app_to_ws "Slack" "4"
   open -na "Twingate"
+  defaultbrowser chromium
+  ~/scripts/tmux-sessionizer ~/projects/work/signus/signus-ui
 else
-  osascript -e 'tell application "Chromium" to quit'
-  osascript -e 'tell application "Slack" to quit'
-  osascript -e 'tell application "Twingate" to quit'
-
+  quit_app "Chromium"
+  quit_app "Slack"
+  quit_app "Twingate"
   open -na "LibreWolf"
-  sleep 1
-  firefox_window_id=$(yabai -m query --windows | jq '.[] | select(.app == "LibreWolf") | .id' | tail -n1)
-  yabai -m window "$firefox_window_id" --space 2
-  yabai -m space --focus 2
-fi
-
-sleep 0.5
-yabai -m space --focus "$current_space"
-
-if [[ "$MODE" == "on" ]]; then
-  ~/scripts/tmux-sessionizer.sh ~/projects/work/signus/signus-ui
-else
-  ~/scripts/tmux-sessionizer.sh ~
+  move_app_to_ws "LibreWolf" "2"
+  defaultbrowser librewolf
+  ~/scripts/tmux-sessionizer ~
 fi

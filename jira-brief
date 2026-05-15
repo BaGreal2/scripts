@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+JQL="assignee = currentUser() AND status changed TO ('In Review', 'In Progress') DURING (-1d, 0d)"
+
+{
+  echo -e "KEY\tSTATUS\tSUMMARY"
+
+  jira issue list \
+    --jql "$JQL" \
+    --columns "KEY,STATUS,SUMMARY" \
+    --plain \
+    --no-headers \
+    --no-truncate | sort -t$'\t' -k2
+} | column -s $'\t' -t

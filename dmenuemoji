@@ -1,0 +1,9 @@
+#!/bin/sh
+
+chosen=$(mac-menu < ~/.local/share/symbols/emoji | sed -r "s/ [a-zA-Z ]+//")
+
+[ "$chosen" ] || exit
+
+printf '%s' "$chosen" | pbcopy
+osascript -e 'tell application "System Events" to keystroke "v" using command down'
+# notify-send -t 1500 "'$chosen' copied to clipboard." &

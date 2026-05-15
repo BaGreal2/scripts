@@ -1,0 +1,11 @@
+#!/bin/bash
+
+sveta_dir="$HOME/images/screenshots/sveta"
+
+min=1
+max=$(($(ls "$sveta_dir" | wc -l) - 1))
+random_index=$(($RANDOM%($max-$min+1)+$min))
+
+selected_image=$(ls "$sveta_dir" | sed -n "${random_index}p")
+
+open "$sveta_dir/$selected_image" &

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 <input_dir> <output_dir>"
+  exit 1
+fi
+
+SRC="$(cd "$1" && pwd)"
+DST="$(mkdir -p "$2" && cd "$2" && pwd)"
+
+find "$SRC" -type f -iname "*.mp3" -print0 | while IFS= read -r -d '' file; do
+  rel="${file#$SRC/}"
+  base="$(basename "$rel")"
+  name="${base%.*}"
+
+  out="$DST/$name.m4b"
+
+  echo "Converting: $rel"
+
+  ffmpeg -nostdin -loglevel error -y \
+    -i "$file" \
+    -vn \
+    -c:a aac \
+    -b:a 128k \
+    -movflags +faststart \
+    "$out"
+done
+
+echo "Done."

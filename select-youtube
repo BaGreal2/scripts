@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+YOUTUBE_DIR="$HOME/videos/youtube"
+
+tmux new-window -n "watch-youtube" "bash -c '
+  FILE_NAME=\$(find \"$YOUTUBE_DIR\" -mindepth 1 -maxdepth 1 -type f \\( -iname \"*.mp4\" -o -iname \"*.mkv\" -o -iname \"*.mov\" \\) | sed \"s|^$YOUTUBE_DIR/||\" | sort | fzf --no-multi --no-sort);
+  if [ -n \"\$FILE_NAME\" ]; then
+    iina \"\$DIR_PATH/\$FILE_NAME\" --mpv-fs
+  fi
+'"

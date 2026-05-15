@@ -1,0 +1,4 @@
+#!/bin/sh
+
+dir=$(find .  -maxdepth 2 -not -path '*/.*' -type d,l | fzf --prompt="Jump to: " --border --layout=reverse)
+selected=$(cd "$dir" && fzf-pr)

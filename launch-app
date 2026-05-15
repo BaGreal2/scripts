@@ -1,0 +1,18 @@
+#!/bin/sh
+
+app_paths=$(fd -d 1 -t d '\.app$' \
+  /Applications ~/Applications /System/Applications 2>/dev/null)
+
+menu_list=$(printf '%s\n' "$app_paths" \
+  | sed 's:/*$::; s#.*/##; s/\.app$//' \
+  | tr '[:upper:]' '[:lower:]' \
+  | sort -fu)
+
+chosen=$(printf '%s\n' "$menu_list" | mac-menu)
+[ -z "$chosen" ] && exit
+
+real_path=$(printf '%s\n' "$app_paths" \
+  | sed 's:/*$::' \
+  | awk -v c="$chosen" '{p=$0; n=$0; sub(".*/","",n); sub(/\.app$/,"",n); if (tolower(n)==c){print p; exit}}')
+
+[ -n "$real_path" ] && open -n -a "$real_path"

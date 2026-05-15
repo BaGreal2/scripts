@@ -3,7 +3,7 @@
 if [[ $# -eq 1 ]]; then
     selected=$1
 else
-    selected=$(find ~/ ~/Developer ~/Developer/personal ~/Developer/work/signus ~/Developer/work/signus/signus-ai/app ~/Developer/university ~/Developer/university/internet-technologies ~/Documents ~/Documents/Notes/University/Semester4 ~/dotfiles ~/.config -mindepth 1 -maxdepth 1 -type d | \
+    selected=$(find ~/ ~/projects ~/projects/personal ~/projects/work/signus ~/projects/third-party ~/projects/university ~/projects/university/iot-cloud-computing/wardex/ ~/Documents ~/Documents/Docs ~/notes/university/sem5 -mindepth 1 -maxdepth 1 -type d | \
         sed "s|^$HOME/||" | \
         fzf --no-multi
     )

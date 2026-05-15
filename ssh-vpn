@@ -1,0 +1,3 @@
+#!/bin/sh
+
+sudo sshuttle -r akravch1@mars.edu.cdv.pl 0.0.0.0/0 --dns --ssh-cmd "ssh -i /Users/xanin/.ssh/id_ed25519"
