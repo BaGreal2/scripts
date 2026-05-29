@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+MOVIE_DIR="$HOME/videos/movies"
+
+DIR_NAME=$(find "$MOVIE_DIR" -mindepth 1 -maxdepth 1 -type d | sed "s|^$MOVIE_DIR/||" | sort | mac-menu)
+
+if [ -n "$DIR_NAME" ]; then
+    DIR_PATH="$MOVIE_DIR/$DIR_NAME"
+    
+    FILE_NAME=$(find "$DIR_PATH" -mindepth 1 -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.mov" \) | sed "s|^$DIR_PATH/||" | sort | mac-menu)
+    
+    if [ -n "$FILE_NAME" ]; then
+        open -na "IINA" --args "$DIR_PATH/$FILE_NAME" --mpv-fs
+    fi
+fi
